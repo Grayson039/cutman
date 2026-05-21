@@ -43,7 +43,7 @@
 <script src="../cutman-design-system.js"></script>
 <script>
 (function () {
-  var T = CM.T, S = CM.S, R = CM.R, c = CM.c;
+  var T = CM.T, S = CM.S, R = CM.R, c = CM.c, HEX = CM.HEX;
 
   /* ── DATA ─────────────────────────────────────────────── */
   var FIGHTER = {
@@ -99,7 +99,7 @@
     var activeTab = cmState.fighterTab || 'record';
     var isDark = th._name === 'dark';
 
-    return '<div style="height:100%;background:' + th.bg + ';display:flex;flex-direction:column;position:relative;font-family:' + T.sans + '">' +
+    return '<div style="height:100%;display:flex;flex-direction:column;position:relative;font-family:' + T.sans + '">' +
       c.notch() + c.statusBar(th) +
 
       /* Back */
@@ -110,8 +110,10 @@
 
         /* Fighter hero */
         '<div style="margin:8px ' + S.xl + ' 14px;border-radius:' + R.xl + ';overflow:hidden;' +
-          'background:' + (isDark ? FIGHTER.gradients.dark : FIGHTER.gradients.light) + ';' +
-          'border:1px solid rgba(232,39,42,0.2);position:relative;padding:20px">' +
+          'background-color:#1A0000;' +
+          'background-image:linear-gradient(160deg,rgba(30,0,0,0.6) 0%,rgba(5,0,0,0.72) 55%,rgba(0,0,0,0.96) 100%),url(../jon.jpg);' +
+          'background-size:100% 100%,cover;background-position:center,center;' +
+          'border:1px solid rgba(232,39,42,0.25);position:relative;padding:20px">' +
 
           '<div style="position:absolute;top:-40px;right:-40px;width:150px;height:150px;border-radius:50%;background:rgba(232,39,42,0.15);filter:blur(35px);pointer-events:none"></div>' +
 
@@ -253,7 +255,7 @@
   }
 
   function sFightCard(th) {
-    return '<div style="height:100%;background:' + th.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:' + T.sans + '">' +
+    return '<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:' + T.sans + '">' +
       c.notch() +
       '<div style="font-size:48px;margin-bottom:14px">🥊</div>' +
       '<div style="font-size:16px;font-weight:700;color:' + th.text + ';margin-bottom:6px">UFC 315 Fight Card</div>' +

@@ -50,7 +50,7 @@
 <script src="../cutman-design-system.js"></script>
 <script>
 (function () {
-  var T = CM.T, S = CM.S, R = CM.R, c = CM.c;
+  var T = CM.T, S = CM.S, R = CM.R, c = CM.c, HEX = CM.HEX;
 
   /* ── DATA ─────────────────────────────────────────────── */
   var NEXT_EVENT = {
@@ -62,7 +62,7 @@
   };
 
   var THIS_WEEK = [
-    { promo: 'UFC',     name: 'UFC 315',            sub: 'Jones vs. Miocic',        date: 'May 31', net: 'ESPN+ PPV',  color: '#2A0000' },
+    { promo: 'UFC',     name: 'UFC 315',            sub: 'Jones vs. Miocic',        date: 'May 31', net: 'ESPN+ PPV',  color: '#2A0000', img: '../ufc%20315.jpg' },
     { promo: 'BOXING',  name: 'Canelo vs. Crawford', sub: 'Super Middleweight Title', date: 'Jun 1',  net: 'DAZN PPV',   color: '#06061E' },
     { promo: 'PFL',     name: 'PFL Playoffs 1',      sub: 'LW & Featherweight',       date: 'Jun 3',  net: 'ESPN2',      color: '#001A08' },
     { promo: 'ONE',     name: 'ONE Fight Night 28',  sub: 'Superlek vs. Nguyen',      date: 'Jun 7',  net: 'Prime Video',color: '#1A1400' }
@@ -82,7 +82,7 @@
     var filter = cmState.homeFilter || 'All';
     var chips   = ['All', 'UFC', 'Boxing', 'PFL', 'ONE', 'Bellator'];
 
-    return '<div style="height:100%;background:' + th.bg + ';display:flex;flex-direction:column;position:relative;font-family:' + T.sans + '">' +
+    return '<div style="height:100%;display:flex;flex-direction:column;position:relative;font-family:' + T.sans + '">' +
       c.notch() + c.statusBar(th) +
 
       /* Header */
@@ -99,8 +99,11 @@
 
         /* NEXT EVENT HERO */
         '<div onclick="cmGo(\'fightCard\')" style="margin:0 ' + S.xl + ' ' + S.section + ';border-radius:' + R.xl + ';overflow:hidden;cursor:pointer;' +
-          'background:linear-gradient(145deg,#2A0000 0%,#1A0000 50%,#0A0A0A 100%);position:relative;height:190px;' +
-          'border:1px solid rgba(232,39,42,0.2);box-shadow:0 8px 32px rgba(232,39,42,0.15)">' +
+          'background-color:#1A0000;' +
+          'background-image:linear-gradient(145deg,rgba(40,0,0,0.8) 0%,rgba(10,0,0,0.65) 40%,rgba(0,0,0,0.88) 100%),url(../stipe%20jones.webp);' +
+          'background-size:100% 100%,cover;background-position:center,center top;' +
+          'position:relative;height:190px;' +
+          'border:1px solid rgba(232,39,42,0.25);box-shadow:0 8px 32px rgba(232,39,42,0.18)">' +
 
           '<div style="position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;background:rgba(232,39,42,0.18);filter:blur(40px);pointer-events:none"></div>' +
 
@@ -143,7 +146,11 @@
         '<div style="display:flex;gap:10px;overflow-x:auto;padding:0 ' + S.xl + ';margin-bottom:' + S.section + ';scrollbar-width:none">' +
           THIS_WEEK.map(function (ev) {
             return '<div onclick="cmGo(\'fightCard\')" style="flex-shrink:0;width:155px;cursor:pointer">' +
-              '<div style="height:115px;border-radius:' + R.lg + ';background:' + ev.color + ';border:1px solid ' + th.border + ';margin-bottom:8px;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.4)">' +
+              '<div style="height:115px;border-radius:' + R.lg + ';' +
+                (ev.img
+                  ? 'background-color:#000;background-image:linear-gradient(to bottom,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.2) 45%,rgba(0,0,0,0.82) 100%),url(' + ev.img + ');background-size:100% 100%,cover;background-position:center,center;'
+                  : 'background:' + ev.color + ';') +
+                'border:1px solid ' + th.border + ';margin-bottom:8px;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.4)">' +
                 '<div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,transparent 55%)"></div>' +
                 '<div style="position:absolute;top:8px;left:8px">' + c.promoBadge(ev.promo) + '</div>' +
                 '<div style="position:absolute;top:8px;right:8px;font-size:9px;color:rgba(255,255,255,0.55);font-weight:600">' + ev.date + '</div>' +
@@ -178,7 +185,7 @@
   }
 
   function sFightCard(th) {
-    return '<div style="height:100%;background:' + th.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:' + T.sans + '">' +
+    return '<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:' + T.sans + '">' +
       c.notch() +
       '<div style="font-size:48px;margin-bottom:14px">🥊</div>' +
       '<div style="font-size:16px;font-weight:700;color:' + th.text + ';margin-bottom:6px">UFC 315 Fight Card</div>' +
@@ -188,7 +195,7 @@
   }
 
   function sCards(th) {
-    return '<div style="height:100%;background:' + th.bg + ';display:flex;flex-direction:column;position:relative;font-family:' + T.sans + '">' +
+    return '<div style="height:100%;display:flex;flex-direction:column;position:relative;font-family:' + T.sans + '">' +
       c.notch() + c.statusBar(th) +
       '<div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column">' +
         '<div style="font-size:48px;margin-bottom:14px">📅</div>' +
@@ -200,7 +207,7 @@
   }
 
   function sNews(th) {
-    return '<div style="height:100%;background:' + th.bg + ';display:flex;flex-direction:column;position:relative;font-family:' + T.sans + '">' +
+    return '<div style="height:100%;display:flex;flex-direction:column;position:relative;font-family:' + T.sans + '">' +
       c.notch() + c.statusBar(th) +
       '<div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column">' +
         '<div style="font-size:48px;margin-bottom:14px">📰</div>' +
