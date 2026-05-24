@@ -16,9 +16,37 @@
     align-items: center; justify-content: center;
     padding: 40px 20px;
   }
+  .phone-outer { position: relative; filter: drop-shadow(0 32px 64px rgba(0,0,0,0.6)); }
+  .side-l { position:absolute;left:-4px;top:108px;width:4px;height:32px;background:#1A1A1A;border-radius:4px 0 0 4px;box-shadow:0 46px 0 #1A1A1A; }
+  .side-r { position:absolute;right:-4px;top:130px;width:4px;height:64px;background:#1A1A1A;border-radius:0 4px 4px 0; }
+  .phone-body { width:370px;height:760px;background:#0D0D0D;border-radius:54px;padding:12px;border:1px solid #2A2A2A;box-shadow:inset 0 1px 1px rgba(255,255,255,0.06),inset 0 -1px 0 rgba(0,0,0,0.5); }
+  #phone-screen { width:100%;height:100%;border-radius:44px;overflow:hidden;position:relative; }
+  .controls { text-align:center;margin-top:24px; }
+  #screen-label { font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px; }
+  .hint { font-size:11px;color:#444;margin-bottom:14px; }
+  #screen-dots { display:flex;gap:7px;align-items:center;justify-content:center;margin-bottom:14px; }
+  #screen-dots .dot { width:7px;height:7px;border-radius:50%;background:#333;transition:all 0.2s; }
+  #screen-dots .dot.on { width:22px;border-radius:4px;background:#E8272A; }
+  .theme-btn { background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);color:#888;font-size:12px;font-weight:600;padding:8px 20px;border-radius:100px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px; }
 </style>
 </head>
 <body>
-<p>Cutman Home Screen - loading...</p>
+
+<div class="phone-outer">
+  <div class="side-l"></div>
+  <div class="side-r"></div>
+  <div class="phone-body">
+    <div id="phone-screen"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <div id="screen-label">Home</div>
+  <div class="hint">Tap the hero card or week cards to navigate</div>
+  <div id="screen-dots"></div>
+  <button class="theme-btn" id="theme-btn" onclick="cmToggleTheme()">☀ Light</button>
+</div>
+
+<script src="../cutman-design-system.js"></script>
 </body>
 </html>
