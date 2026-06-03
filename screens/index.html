@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cutman — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Syne:wght@800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111111; color: #F0F0F0; font-family: 'Inter', sans-serif; min-height: 100vh; padding: 48px 24px 64px; }
+  .header { max-width: 640px; margin: 0 auto 56px; text-align: center; }
+  .logo-dot { width: 10px; height: 10px; background: #E8272A; border-radius: 50%; display: inline-block; margin-bottom: 24px; }
+  .title { font-family: 'Syne', sans-serif; font-size: clamp(42px, 8vw, 72px); font-weight: 800; color: #F0F0F0; line-height: 1; margin-bottom: 16px; letter-spacing: -0.02em; }
+  .subtitle { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #555; margin-bottom: 8px; }
+  .tagline { font-size: 12px; color: #888; letter-spacing: 0.03em; line-height: 1.7; }
+  .divider { width: 40px; height: 1px; background: #222; margin: 32px auto; }
+  .phase-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #E8272A; text-align: center; margin-bottom: 32px; }
+  .grid { max-width: 780px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px; background: #222; }
+  .screen-card { background: #161616; padding: 28px 24px; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px; transition: background 0.2s; }
+  .screen-card:hover { background: #1C1C1C; }
+  .screen-card:hover .arrow { color: #E8272A; }
+  .screen-num { font-size: 9px; color: #333; letter-spacing: 0.12em; font-weight: 600; }
+  .screen-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; color: #F0F0F0; line-height: 1.2; }
+  .screen-desc { font-size: 10px; color: #555; line-height: 1.6; flex: 1; }
+  .arrow { font-size: 14px; color: #333; transition: color 0.2s; align-self: flex-end; }
+  .footer { max-width: 780px; margin: 48px auto 0; display: flex; justify-content: space-between; padding-top: 24px; border-top: 1px solid #222; flex-wrap: wrap; gap: 12px; }
+  .footer span { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: #333; }
+  .red { color: #E8272A; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo-dot"></div>
+  <div class="title">Cutman</div>
+  <div class="subtitle">Phase 1 UI Prototype &middot; 3 Screens</div>
+  <div class="tagline">Every promotion. All the fights. One app.<br>Combat sports fans don&rsquo;t need more sources &mdash; they need one source that thinks like a fan.</div>
+  <div class="divider"></div>
+  <div class="phase-label">&#9679; Phase 1 &mdash; Data Layer &amp; UI Design &mdash; In Progress</div>
+</div>
+<div class="grid">
+  <a href="01-home.html" class="screen-card">
+    <div class="screen-num">01 / 03</div>
+    <div class="screen-name">Home</div>
+    <div class="screen-desc">Tonight&rsquo;s events, featured fight card, top stories. The full picture at a glance.</div>
+    <div class="arrow">&#x2197;</div>
+  </a>
+  <a href="02-fight-card.html" class="screen-card">
+    <div class="screen-num">02 / 03</div>
+    <div class="screen-name">Fight Card</div>
+    <div class="screen-desc">Full card breakdown for any event &mdash; bouts, records, broadcast info, odds.</div>
+    <div class="arrow">&#x2197;</div>
+  </a>
+  <a href="03-fighter-profile.html" class="screen-card">
+    <div class="screen-num">03 / 03</div>
+    <div class="screen-name">Fighter Profile</div>
+    <div class="screen-desc">Stats, record, fight history, gym connections via the Corner tab. No other app has this.</div>
+    <div class="arrow">&#x2197;</div>
+  </a>
+</div>
+<div class="footer">
+  <span>Cutman &middot; <span class="red">Will Grayson</span></span>
+  <span>Phase 1 of 3 &middot; React Native &middot; Python FastAPI</span>
+</div>
+</body>
+</html>
