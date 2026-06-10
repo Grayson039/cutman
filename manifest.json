@@ -2,7 +2,7 @@
   "name": "Cutman",
   "short_name": "Cutman",
   "description": "Every promotion. All the fights. One app.",
-  "start_url": "/app.html",
+  "start_url": "/cutman/app.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0A0A0A",
