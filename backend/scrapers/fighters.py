@@ -110,6 +110,21 @@ def get_fighter_profile(slug: str) -> tuple[dict | None, str | None]:
 
     soup = BeautifulSoup(resp.text, "html.parser")
 
+    # ── Photo ────────────────────────────────────────────────
+    photo = ""
+    photo_el = soup.find("img", itemprop="image") or soup.find("img", class_=lambda c: c and "profile" in c.lower())
+    if not photo_el:
+        # Sherdog puts the fighter photo in a div.profile-image img
+        profile_div = soup.find("div", class_=lambda c: c and "profile" in (c or "").lower())
+        if profile_div:
+            photo_el = profile_div.find("img")
+    if photo_el:
+        src = photo_el.get("src", "")
+        if src and "sherdog.com" in src:
+            photo = src
+        elif src and src.startswith("/"):
+            photo = BASE + src
+
     # ── Name + nickname ──────────────────────────────────────
     name     = ""
     nickname = ""
@@ -216,6 +231,7 @@ def get_fighter_profile(slug: str) -> tuple[dict | None, str | None]:
     profile = {
         "name":          name,
         "nickname":      nickname,
+        "photo":         photo,
         "age":           age,
         "dob":           dob,
         "height":        height,

@@ -568,8 +568,8 @@
               : results.map(function (f) {
                   return '<div onclick="cmLoadFighter(\'' + escAttr(f.slug) + '\')" ' +
                     'style="padding:12px ' + S.xl + ';border-bottom:1px solid ' + th.border + ';cursor:pointer;display:flex;align-items:center;gap:12px">' +
-                    '<div style="width:40px;height:40px;border-radius:' + R.md + ';background:' + th.card2 + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
-                      '<span style="font-size:18px">🥊</span>' +
+                    '<div style="width:44px;height:44px;border-radius:' + R.md + ';background:' + th.primary + '22;border:1.5px solid ' + th.primary + '44;display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
+                      '<span style="font-size:16px;font-weight:800;color:' + th.primary + '">' + escHtml((f.name||'?').charAt(0).toUpperCase()) + '</span>' +
                     '</div>' +
                     '<div style="flex:1;min-width:0">' +
                       '<div style="font-size:14px;font-weight:700;color:' + th.text + '">' + escHtml(f.name) + '</div>' +
@@ -628,17 +628,26 @@
         '<div style="padding-top:' + safeTop + ';padding-left:' + S.xl + ';padding-right:' + S.xl + ';padding-bottom:0">' +
           c.backBtn(th, 'Fighters') +
         '</div>' +
-        '<div style="padding:12px ' + S.xl + ' 16px">' +
-          '<div style="font-size:28px;font-weight:900;color:' + th.text + ';letter-spacing:-0.02em;line-height:1.1">' + escHtml(p.name) + '</div>' +
-          (p.nickname ? '<div style="font-size:13px;color:' + th.muted + ';margin-top:3px;font-style:italic">"' + escHtml(p.nickname) + '"</div>' : '') +
-          '<div style="display:flex;align-items:center;gap:12px;margin-top:12px">' +
-            '<div style="text-align:center">' +
-              '<div style="font-size:26px;font-weight:900;color:' + th.text + '">' + record + '</div>' +
-              '<div style="font-size:9px;color:' + th.muted + ';letter-spacing:0.08em">RECORD</div>' +
+        '<div style="padding:12px ' + S.xl + ' 16px;display:flex;gap:14px;align-items:flex-start">' +
+          /* Photo */
+          (p.photo
+            ? '<img src="' + escHtml(p.photo) + '" alt="' + escHtml(p.name) + '" ' +
+                'style="width:80px;height:80px;border-radius:' + R.lg + ';object-fit:cover;object-position:top;' +
+                'border:2px solid ' + th.border + ';flex-shrink:0" ' +
+                'onerror="this.style.display=\'none\'">'
+            : '<div style="width:80px;height:80px;border-radius:' + R.lg + ';background:' + th.card2 + ';' +
+                'display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:32px">🥊</div>') +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:24px;font-weight:900;color:' + th.text + ';letter-spacing:-0.02em;line-height:1.1">' + escHtml(p.name) + '</div>' +
+            (p.nickname ? '<div style="font-size:12px;color:' + th.muted + ';margin-top:3px;font-style:italic">"' + escHtml(p.nickname) + '"</div>' : '') +
+            '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">' +
+              '<div>' +
+                '<div style="font-size:22px;font-weight:900;color:' + th.text + '">' + record + '</div>' +
+                '<div style="font-size:9px;color:' + th.muted + ';letter-spacing:0.08em">RECORD</div>' +
+              '</div>' +
+              '<div style="width:1px;height:32px;background:' + th.border + '"></div>' +
+              (p.weight_class ? '<div style="font-size:11px;font-weight:700;color:' + th.sub + '">' + escHtml(p.weight_class) + '</div>' : '') +
             '</div>' +
-            '<div style="width:1px;height:36px;background:' + th.border + '"></div>' +
-            (p.weight_class ? '<div style="font-size:11px;font-weight:700;color:' + th.sub + '">' + escHtml(p.weight_class) + '</div>' : '') +
-            (p.association ? '<div style="font-size:11px;color:' + th.muted + '">' + escHtml(p.association) + '</div>' : '') +
           '</div>' +
         '</div>' +
       '</div>' +
