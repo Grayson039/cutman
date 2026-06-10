@@ -62,4 +62,6 @@ def fighter_profile(slug):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8000, host='0.0.0.0')
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    app.run(debug=False, port=port, host="0.0.0.0")
