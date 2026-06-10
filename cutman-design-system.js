@@ -97,7 +97,8 @@ var CM = (function () {
       BOXING:   'background:#0A0A1E;border:1px solid #818CF8;color:#818CF8',
       PFL:      'background:#001A08;border:1px solid #22C55E;color:#4ADE80',
       ONE:      'background:#1A1400;border:1px solid #D4A853;color:#D4A853',
-      BELLATOR: 'background:#0C0018;border:1px solid #A855F7;color:#C084FC'
+      BELLATOR: 'background:#0C0018;border:1px solid #A855F7;color:#C084FC',
+      BKFC:     'background:#1A0A00;border:1px solid #F97316;color:#F97316'
     };
     return '<span style="font-size:9px;font-weight:800;letter-spacing:0.08em;padding:2px 8px;border-radius:4px;' +
       (styles[promo] || 'background:#111;border:1px solid #555;color:#999') + '">' + promo + '</span>';
@@ -231,8 +232,8 @@ var CM = (function () {
       if (!el) return;
       el.innerHTML = screens[state.cur] ? screens[state.cur](th, state) : '<div style="color:red;padding:20px">Screen not found: ' + state.cur + '</div>';
       el.style.backgroundColor = th.bg;
-      el.style.backgroundImage = HEX;
-      el.style.backgroundSize = '28px 49px';
+      el.style.backgroundImage = '';
+      el.style.backgroundSize = '';
       if (opts && opts.onRender) opts.onRender(state, th);
     }
 
