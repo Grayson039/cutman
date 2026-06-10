@@ -408,44 +408,120 @@
     ]
   };
 
+  /* Helper: parse "Fighter A vs. Fighter B" → ['Fighter A', 'Fighter B'] */
+  function parseVs(str) {
+    if (!str) return [];
+    var parts = str.split(/\s+vs\.?\s+/i);
+    return parts.map(function(p) { return p.trim(); }).filter(Boolean);
+  }
+
+  /* Navigate to fighters tab and trigger a search */
+  window.cmSearchFighter = function(name) {
+    cmState.searchQuery = name;
+    cmState.searchResults = null;
+    cmGo('fighters');
+    setTimeout(function() {
+      var inp = document.getElementById('fighter-search');
+      if (inp) inp.value = name;
+      cmSearch(name);
+    }, 50);
+  };
+
   function sFightCard(th) {
     var raw = cmState.selectedEvent;
     var ev = (typeof raw === 'string') ? tryParse(raw) : (raw || STATIC_CARD);
     var showPrelims = cmState.showPrelims !== false;
     var promo = promoFromEvent(ev);
     var col = promoColor(promo);
-    var mainCard = ev.main_card || ev.mainCard || STATIC_CARD.main_card;
-    var prelims  = ev.prelims || STATIC_CARD.prelims;
+    var mainCard = ev.main_card || ev.mainCard || null;
+    var prelims  = ev.prelims || [];
+    var hasCard  = mainCard && mainCard.length > 0;
+    var mainFight = ev.main_event || ev.mainEvent || '';
+    var fighters = parseVs(mainFight);
 
-    return '<div style="height:100%;display:flex;flex-direction:column;background:' + th.bg + ';font-family:' + T.sans + '">' +
-
-      /* Header */
+    var eventHeader =
       '<div style="padding-top:' + safeTop + ';padding-left:' + S.xl + ';padding-right:' + S.xl + ';padding-bottom:10px;flex-shrink:0;background:' + th.bg + '">' +
         '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' +
           c.backBtn(th, '') +
           '<div style="flex:1">' +
-            '<div style="font-size:18px;font-weight:900;color:' + th.text + ';letter-spacing:-0.02em">' + (ev.name || 'Fight Card') + '</div>' +
-            '<div style="font-size:10px;color:' + th.muted + ';margin-top:1px">' + (ev.date||'') + (ev.venue ? ' · ' + ev.venue : '') + '</div>' +
+            '<div style="font-size:18px;font-weight:900;color:' + th.text + ';letter-spacing:-0.02em">' + escHtml(ev.name || 'Fight Card') + '</div>' +
+            '<div style="font-size:10px;color:' + th.muted + ';margin-top:1px">' + escHtml(ev.date||'') + (ev.venue ? ' · ' + escHtml(ev.venue) : '') + '</div>' +
           '</div>' +
           c.promoBadge(promo || (ev.promotion||'').substring(0,10)) +
         '</div>' +
-        '<div style="display:flex;align-items:center;justify-content:space-between">' +
-          (ev.network ? '<div style="font-size:11px;font-weight:700;color:' + th.sub + '">' + ev.network + (ev.ppvPrice ? ' · PPV ' + ev.ppvPrice : '') + '</div>' : '<div></div>') +
+        (ev.network || ev.location
+          ? '<div style="font-size:11px;font-weight:600;color:' + th.sub + '">' +
+              (ev.network || '') + (ev.location ? ' · ' + ev.location : '') +
+            '</div>'
+          : '') +
+      '</div>';
+
+    if (hasCard) {
+      /* Full fight card (UFC-style) */
+      return '<div style="height:100%;display:flex;flex-direction:column;background:' + th.bg + ';font-family:' + T.sans + '">' +
+        eventHeader +
+        '<div style="display:flex;justify-content:flex-end;padding:0 ' + S.xl + ' 8px;flex-shrink:0">' +
           '<div onclick="cmToggleState(\'showPrelims\')" style="font-size:10px;font-weight:600;color:' + (showPrelims ? th.primary : th.muted) + ';cursor:pointer">Prelims ' + (showPrelims ? '▲' : '▼') + '</div>' +
         '</div>' +
-      '</div>' +
+        '<div class="scroll" style="flex:1;padding-bottom:calc(' + NAV_H + 'px + ' + safeBottom + ')">' +
+          '<div style="padding:8px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">MAIN CARD</div>' +
+          mainCard.map(function (f) { return c.fightRow(th, f); }).join('') +
+          (showPrelims && prelims.length
+            ? '<div style="padding:16px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">PRELIMS</div>' +
+              prelims.map(function (f) { return c.fightRow(th, f); }).join('')
+            : '') +
+          '<div style="height:24px"></div>' +
+        '</div>' +
+        c.navBar(th, 1) +
+      '</div>';
+    }
 
-      /* Fight list */
+    /* No detailed card — show main event fighters as tappable bio cards */
+    return '<div style="height:100%;display:flex;flex-direction:column;background:' + th.bg + ';font-family:' + T.sans + '">' +
+      eventHeader +
       '<div class="scroll" style="flex:1;padding-bottom:calc(' + NAV_H + 'px + ' + safeBottom + ')">' +
-        '<div style="padding:8px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">MAIN CARD</div>' +
-        mainCard.map(function (f) { return c.fightRow(th, f); }).join('') +
-        (showPrelims && prelims.length
-          ? '<div style="padding:16px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">PRELIMS</div>' +
-            prelims.map(function (f) { return c.fightRow(th, f); }).join('')
-          : '') +
+
+        (fighters.length >= 2
+          ? '<div style="padding:16px ' + S.xl + ' 8px">' +
+              '<div style="font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em;margin-bottom:14px">MAIN EVENT</div>' +
+
+              /* VS layout with fighter cards */
+              '<div style="display:flex;align-items:center;gap:10px">' +
+                fighters.slice(0, 2).map(function(name, i) {
+                  return '<div onclick="cmSearchFighter(\'' + escAttr(name) + '\')" ' +
+                    'style="flex:1;background:' + th.card + ';border:1px solid ' + th.border + ';border-radius:' + R.lg + ';' +
+                    'padding:16px 12px;cursor:pointer;text-align:' + (i === 0 ? 'left' : 'right') + '">' +
+                    '<div style="font-size:14px;font-weight:800;color:' + th.text + ';line-height:1.2;margin-bottom:6px">' + escHtml(name) + '</div>' +
+                    '<div style="font-size:10px;color:' + th.primary + ';font-weight:600">View Profile →</div>' +
+                  '</div>';
+                }).join(
+                  '<div style="font-size:11px;font-weight:800;color:' + th.muted + ';flex-shrink:0">VS</div>'
+                ) +
+              '</div>' +
+            '</div>'
+          : mainFight
+            ? '<div style="padding:16px ' + S.xl + '">' +
+                '<div style="font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em;margin-bottom:10px">MAIN EVENT</div>' +
+                '<div style="font-size:18px;font-weight:800;color:' + th.text + '">' + escHtml(mainFight) + '</div>' +
+              '</div>'
+            : '') +
+
+        /* Fighter search for this event */
+        '<div style="padding:20px ' + S.xl + ' 8px">' +
+          '<div style="font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em;margin-bottom:12px">SEARCH FIGHTERS ON THIS CARD</div>' +
+          '<div style="position:relative">' +
+            '<svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + th.muted + '" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+            '<input type="search" placeholder="Search any fighter…" ' +
+              'oninput="cmSearchFighter(this.value)" ' +
+              'style="width:100%;height:42px;background:' + th.card + ';border:1px solid ' + th.border + ';' +
+              'border-radius:' + R.pill + ';color:' + th.text + ';font-size:14px;padding:0 16px 0 38px;' +
+              '-webkit-appearance:none" />' +
+          '</div>' +
+          '<div style="font-size:11px;color:' + th.muted + ';margin-top:8px">Tap a fighter above or search any name to see their full bio and fight history</div>' +
+        '</div>' +
+
         '<div style="height:24px"></div>' +
       '</div>' +
-
       c.navBar(th, 1) +
     '</div>';
   }
