@@ -9,12 +9,17 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
 RSS_SOURCES = [
+    # MMA
     {"name": "MMA Fighting",  "url": "https://www.mmafighting.com/rss/current"},
     {"name": "Sherdog",       "url": "https://www.sherdog.com/rss/news.xml"},
     {"name": "ESPN MMA",      "url": "https://www.espn.com/espn/rss/mma/news"},
     {"name": "Tapology",      "url": "https://www.tapology.com/news.rss"},
     {"name": "Bloody Elbow",  "url": "https://bloodyelbow.substack.com/feed"},
     {"name": "MMA Mania",     "url": "https://www.mmamania.com/rss/current"},
+    # Boxing
+    {"name": "ESPN Boxing",   "url": "https://www.espn.com/espn/rss/boxing/news"},
+    {"name": "Bad Left Hook",  "url": "https://www.badlefthook.com/rss/current"},
+    {"name": "The Ring",      "url": "https://www.ringtv.com/feed/"},
 ]
 
 

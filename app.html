@@ -281,9 +281,12 @@
     var news    = cmState.newsData;
     var loading = !cmState._eventsLoaded || !cmState._newsLoaded;
 
+    var BOXING_PROMOS = ['GB','GBP','TR','MB','MR','QB','QBP','DBE','PBC','GOLDEN BOY',
+      'TOP RANK','MATCHROOM','QUEENSBERRY','PREMIER BOXING','DIBELLA','PROBELLUM','DAZN','BOXING'];
     var filtered = events ? events.filter(function (ev) {
       if (filter === 'All') return true;
       var p = promoFromEvent(ev);
+      if (filter === 'Boxing') return BOXING_PROMOS.indexOf(p) >= 0;
       return p === filter.toUpperCase() || p.indexOf(filter.toUpperCase()) >= 0;
     }) : null;
 

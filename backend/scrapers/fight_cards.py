@@ -61,8 +61,14 @@ PROMO_NAMES = {
 # Only include promotions in this set (by abbreviation).
 # Empty set = show everything.
 MAJOR_PROMOS = {
+    # MMA
     "UFC", "PFL", "ONE", "OFC", "LFA", "BKFC", "BNFC",
-    "CG", "COMBATE", "RIZIN", "CW", "GLORY", "GB", "GBP", "TR", "MB", "MR", "WOW",
+    "CG", "COMBATE", "RIZIN", "CW", "GLORY", "WOW",
+    # Boxing — Golden Boy, Top Rank, Matchroom, Queensberry, DiBella, Premier Boxing
+    "GB", "GBP", "TR", "MB", "MR", "QB", "QBP", "DBE", "PBC",
+    # Boxing — promoter name variants Tapology uses
+    "GOLDEN BOY", "TOP RANK", "MATCHROOM", "QUEENSBERRY",
+    "PREMIER BOXING", "DIBELLA", "PROBELLUM", "DAZN",
 }
 
 
