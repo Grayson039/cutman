@@ -162,9 +162,14 @@
     '</div>';
   }
 
+  var BOXING_PROMOS = ['GB','GBP','TR','MB','MR','QB','QBP','DBE','PBC','GOLDEN BOY',
+    'TOP RANK','MATCHROOM','QUEENSBERRY','PREMIER BOXING','DIBELLA','PROBELLUM','DAZN','BOXING'];
+
   function promoColor(promo) {
-    var map = { UFC: '#E8272A', BOXING: '#818CF8', PFL: '#4ADE80', ONE: '#D4A853', BELLATOR: '#C084FC', BKFC: '#F97316' };
-    return map[(promo||'').toUpperCase()] || '#9A9A9A';
+    var p = (promo || '').toUpperCase();
+    if (BOXING_PROMOS.indexOf(p) >= 0) p = 'BOXING';
+    var map = { UFC: '#D20A0A', PFL: '#00A651', ONE: '#C9A84C', BKFC: '#E87722', BOXING: '#9B59B6', BELLATOR: '#1A6FBF' };
+    return map[p] || '#9A9A9A';
   }
 
   function promoFromEvent(ev) {
@@ -183,17 +188,14 @@
     var net = ev.network || '';
 
     return '<div onclick="cmGo(\'fightCard\')" style="margin:0 ' + S.xl + ' ' + S.section + ';border-radius:' + R.xl + ';' +
-      'background:linear-gradient(145deg,' + col + '22 0%,rgba(0,0,0,0.88) 100%);' +
+      'background:radial-gradient(circle at 0% 100%,' + col + '4D 0%,rgba(10,10,10,0.94) 55%,#0A0A0A 100%);' +
       'border:1px solid ' + col + '44;box-shadow:0 8px 32px ' + col + '22;' +
       'position:relative;height:190px;overflow:hidden;cursor:pointer">' +
-
-      '<div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;' +
-        'background:' + col + '28;filter:blur(36px);pointer-events:none"></div>' +
 
       '<div style="position:absolute;inset:0;padding:18px;display:flex;flex-direction:column;justify-content:space-between">' +
 
         '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
-          c.promoBadge(promo || (ev.promotion || '').substring(0, 10)) +
+          c.promoBadge(promo || (ev.promotion || '').substring(0, 10), col) +
           '<div style="font-size:10px;color:rgba(255,255,255,0.55);font-weight:600">' + date + '</div>' +
         '</div>' +
 
@@ -238,11 +240,10 @@
 
     return '<div onclick="cmSetState(\'selectedEvent\',' + JSON.stringify(JSON.stringify(ev)) + ');cmGo(\'fightCard\')" ' +
       'style="flex-shrink:0;width:160px;cursor:pointer">' +
-      '<div style="height:118px;border-radius:' + R.lg + ';background:linear-gradient(135deg,' + col + '22 0%,' + th.card + ' 100%);' +
+      '<div style="height:118px;border-radius:' + R.lg + ';background:radial-gradient(circle at 0% 100%,' + col + '55 0%,' + th.card + ' 65%);' +
         'border:1px solid ' + th.border + ';margin-bottom:8px;position:relative;overflow:hidden;' +
         'box-shadow:0 4px 16px rgba(0,0,0,0.3)">' +
-        '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:' + col + '14"></div>' +
-        '<div style="position:absolute;top:8px;left:8px">' + c.promoBadge(promo || name.substring(0,10)) + '</div>' +
+        '<div style="position:absolute;top:8px;left:8px">' + c.promoBadge(promo || name.substring(0,10), col) + '</div>' +
         '<div style="position:absolute;top:8px;right:8px;font-size:9px;color:rgba(255,255,255,0.55);font-weight:600">' + date + '</div>' +
         '<div style="position:absolute;bottom:8px;left:8px;right:8px">' +
           '<div style="font-size:12px;font-weight:800;color:#FFF;line-height:1.2">' + name + '</div>' +
@@ -281,8 +282,6 @@
     var news    = cmState.newsData;
     var loading = !cmState._eventsLoaded || !cmState._newsLoaded;
 
-    var BOXING_PROMOS = ['GB','GBP','TR','MB','MR','QB','QBP','DBE','PBC','GOLDEN BOY',
-      'TOP RANK','MATCHROOM','QUEENSBERRY','PREMIER BOXING','DIBELLA','PROBELLUM','DAZN','BOXING'];
     var filtered = events ? events.filter(function (ev) {
       if (filter === 'All') return true;
       var p = promoFromEvent(ev);
@@ -447,7 +446,7 @@
             '<div style="font-size:18px;font-weight:900;color:' + th.text + ';letter-spacing:-0.02em">' + escHtml(ev.name || 'Fight Card') + '</div>' +
             '<div style="font-size:10px;color:' + th.muted + ';margin-top:1px">' + escHtml(ev.date||'') + (ev.venue ? ' · ' + escHtml(ev.venue) : '') + '</div>' +
           '</div>' +
-          c.promoBadge(promo || (ev.promotion||'').substring(0,10)) +
+          c.promoBadge(promo || (ev.promotion||'').substring(0,10), col) +
         '</div>' +
         (ev.network || ev.location
           ? '<div style="font-size:11px;font-weight:600;color:' + th.sub + '">' +

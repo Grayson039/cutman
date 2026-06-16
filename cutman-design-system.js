@@ -91,17 +91,14 @@ var CM = (function () {
     '</div>';
   };
 
-  c.promoBadge = function (promo) {
-    var styles = {
-      UFC:      'background:#200000;border:1px solid #E8272A;color:#E8272A',
-      BOXING:   'background:#0A0A1E;border:1px solid #818CF8;color:#818CF8',
-      PFL:      'background:#001A08;border:1px solid #22C55E;color:#4ADE80',
-      ONE:      'background:#1A1400;border:1px solid #D4A853;color:#D4A853',
-      BELLATOR: 'background:#0C0018;border:1px solid #A855F7;color:#C084FC',
-      BKFC:     'background:#1A0A00;border:1px solid #F97316;color:#F97316'
-    };
+  c.promoBadge = function (promo, bg) {
+    bg = bg || '#333333';
+    var hex = bg.replace('#', '');
+    var r = parseInt(hex.substr(0,2),16) || 0, g = parseInt(hex.substr(2,2),16) || 0, b = parseInt(hex.substr(4,2),16) || 0;
+    var luma = 0.299*r + 0.587*g + 0.114*b;
+    var textColor = luma > 150 ? '#1A1400' : '#FFFFFF';
     return '<span style="font-size:9px;font-weight:800;letter-spacing:0.08em;padding:2px 8px;border-radius:4px;' +
-      (styles[promo] || 'background:#111;border:1px solid #555;color:#999') + '">' + promo + '</span>';
+      'background:' + bg + ';color:' + textColor + '">' + promo + '</span>';
   };
 
   c.liveBadge = function () {
