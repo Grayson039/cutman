@@ -225,6 +225,23 @@
     '</div>';
   }
 
+  function renderEventHeroEmpty(th, filter) {
+    var isAll = !filter || filter === 'All';
+    var col = isAll ? th.primary : promoColor(filter);
+    var emoji = filter === 'Boxing' ? '🥊' : '🏆';
+    var message = isAll
+      ? 'No upcoming events — check back soon.'
+      : 'No ' + filter + ' events this week — check back soon.';
+
+    return '<div style="margin:0 ' + S.xl + ' ' + S.section + ';border-radius:' + R.xl + ';' +
+      'background:radial-gradient(circle at 0% 100%,' + col + '33 0%,rgba(10,10,10,0.94) 55%,#0A0A0A 100%);' +
+      'border:1px solid ' + col + '33;height:190px;display:flex;flex-direction:column;align-items:center;' +
+      'justify-content:center;text-align:center;gap:10px;padding:0 28px">' +
+      '<div style="font-size:32px">' + emoji + '</div>' +
+      '<div style="font-size:13px;font-weight:700;color:' + col + ';line-height:1.5">' + message + '</div>' +
+    '</div>';
+  }
+
   function renderEventCardSkeleton(th) {
     return '<div style="flex-shrink:0;width:160px">' +
       skeleton(th,'160px','118px',R.lg) +
@@ -258,11 +275,11 @@
         '<div style="position:absolute;top:8px;left:8px">' + c.promoBadge(promo || name.substring(0,10), col) + '</div>' +
         '<div style="position:absolute;top:8px;right:8px;font-size:9px;color:rgba(255,255,255,0.55);font-weight:600">' + date + '</div>' +
         '<div style="position:absolute;bottom:8px;left:8px;right:8px">' +
-          '<div style="font-size:12px;font-weight:800;color:#FFF;line-height:1.2">' + name + '</div>' +
+          (mainFight ? '<div style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</div>' : '') +
+          '<div style="font-size:12px;font-weight:800;color:#FFF;line-height:1.2;text-shadow:0 1px 3px rgba(0,0,0,0.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (mainFight || name) + '</div>' +
           (net ? '<div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px">' + net + '</div>' : '') +
         '</div>' +
       '</div>' +
-      (mainFight ? '<div style="font-size:11px;font-weight:600;color:' + th.sub + ';line-height:1.35">' + mainFight + '</div>' : '') +
     '</div>';
   }
 
@@ -313,7 +330,7 @@
           ? renderEventHero(th, nextEv)
           : loading
             ? renderEventHeroSkeleton(th)
-            : '<div style="margin:0 ' + S.xl + ' ' + S.section + ';border-radius:' + R.xl + ';background:' + th.card + ';height:190px;display:flex;align-items:center;justify-content:center;color:' + th.muted + ';font-size:13px">No upcoming events</div>') +
+            : renderEventHeroEmpty(th, filter)) +
 
         /* Filter chips */
         '<div class="hscroll" style="display:flex;gap:7px;padding:0 ' + S.xl + ';margin-bottom:' + S.section + '">' +
