@@ -267,7 +267,7 @@
     var date = (ev.date || '').replace(/\d{4}/, '').trim().replace(/,\s*$/, '');
     var net = ev.network || '';
 
-    return '<div onclick="cmSetState(\'selectedEvent\',' + JSON.stringify(JSON.stringify(ev)) + ');cmGo(\'fightCard\')" ' +
+    return '<div onclick="' + escHtml("cmSetState('selectedEvent'," + JSON.stringify(JSON.stringify(ev)) + ");cmGo('fightCard')") + '" ' +
       'style="flex-shrink:0;width:160px;cursor:pointer">' +
       '<div style="height:118px;border-radius:' + R.lg + ';background:radial-gradient(circle at 0% 100%,' + col + '55 0%,' + th.card + ' 65%);' +
         'border:1px solid ' + th.border + ';margin-bottom:8px;position:relative;overflow:hidden;' +
@@ -385,7 +385,7 @@
                 var promo = promoFromEvent(ev);
                 var col = promoColor(promo);
                 var mainFight = ev.main_event || ev.mainEvent || '';
-                return '<div onclick="cmSetState(\'selectedEvent\',' + JSON.stringify(JSON.stringify(ev)) + ');cmGo(\'fightCard\')" ' +
+                return '<div onclick="' + escHtml("cmSetState('selectedEvent'," + JSON.stringify(JSON.stringify(ev)) + ");cmGo('fightCard')") + '" ' +
                   'style="padding:14px ' + S.xl + ';border-bottom:1px solid ' + th.border + ';cursor:pointer;display:flex;align-items:center;gap:14px">' +
                   '<div style="width:44px;height:44px;border-radius:' + R.md + ';background:' + col + '22;border:1.5px solid ' + col + '55;' +
                     'display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
