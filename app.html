@@ -83,6 +83,37 @@
       });
   }
 
+  function loadEventCard(ev) {
+    var key = ev && ev.wiki_url;
+    if (!key) {
+      cmState.eventCardBouts = null;
+      cmState._eventCardKey = '';
+      cmState._eventCardLoaded = true;
+      cmState._eventCardLoading = false;
+      return;
+    }
+    if (cmState._eventCardKey === key && (cmState._eventCardLoaded || cmState._eventCardLoading)) return;
+    cmState._eventCardKey = key;
+    cmState._eventCardLoaded = false;
+    cmState._eventCardLoading = true;
+    fetch(API + '/api/events/card?wiki_url=' + encodeURIComponent(key))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (cmState._eventCardKey !== key) return;
+        cmState.eventCardBouts = Array.isArray(data.bouts) ? data.bouts : [];
+        cmState._eventCardLoaded = true;
+        cmState._eventCardLoading = false;
+        if (cmState.cur === 'fightCard') cmRender();
+      })
+      .catch(function () {
+        if (cmState._eventCardKey !== key) return;
+        cmState.eventCardBouts = [];
+        cmState._eventCardLoaded = true;
+        cmState._eventCardLoading = false;
+        if (cmState.cur === 'fightCard') cmRender();
+      });
+  }
+
   var _searchTimer;
   window.cmSearch = function (val) {
     cmState.searchQuery = val;
@@ -410,6 +441,78 @@
     '</div>';
   }
 
+  function getInitials(name) {
+    var parts = (name || '').trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return parts[0] ? parts[0][0].toUpperCase() : '?';
+  }
+
+  function fighterAvatar(th, f, size) {
+    size = size || 56;
+    var fontSize = Math.round(size * 0.32);
+    var fallback = '<div style="width:100%;height:100%;border-radius:' + R.lg + ';background:' + th.card2 + ';' +
+      'display:flex;align-items:center;justify-content:center;font-size:' + fontSize + 'px;font-weight:900;color:' + th.primary + '">' +
+      escHtml(getInitials(f.name)) + '</div>';
+
+    return '<div style="position:relative;width:' + size + 'px;height:' + size + 'px;flex-shrink:0">' +
+      (f.photo
+        ? '<img src="' + escHtml(f.photo) + '" alt="' + escHtml(f.name) + '" ' +
+            'style="width:100%;height:100%;border-radius:' + R.lg + ';object-fit:cover;object-position:top;' +
+            'border:1.5px solid ' + th.border + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+          '<div style="display:none;width:100%;height:100%;border-radius:' + R.lg + ';background:' + th.card2 + ';' +
+            'align-items:center;justify-content:center;font-size:' + fontSize + 'px;font-weight:900;color:' + th.primary + '">' +
+            escHtml(getInitials(f.name)) + '</div>'
+        : fallback) +
+      (f.champion ? '<div style="position:absolute;top:-5px;left:-5px;font-size:13px">🏆</div>' : '') +
+    '</div>';
+  }
+
+  function renderBoutCard(th, bout) {
+    var a = bout.fighter_a, b = bout.fighter_b;
+    var hasResult = a.winner !== undefined;
+    var aWin = a.winner === true, bWin = b.winner === true;
+
+    function fighterCol(f, won) {
+      return '<div onclick="cmSearchFighter(\'' + escAttr(f.name) + '\')" ' +
+        'style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;min-width:0">' +
+        fighterAvatar(th, f, 56) +
+        '<div style="font-size:11px;font-weight:' + (won ? '800' : '600') + ';color:' +
+          (won ? th.text : (hasResult ? th.muted : th.text)) + ';text-align:center;line-height:1.25">' + escHtml(f.name) + '</div>' +
+        (won ? '<span style="font-size:8px;font-weight:800;color:#FFF;background:' + th.primary + ';padding:1px 6px;border-radius:4px">WIN</span>' : '') +
+      '</div>';
+    }
+
+    return '<div style="padding:14px ' + S.xl + ';border-bottom:1px solid ' + th.border + '">' +
+      '<div style="text-align:center;margin-bottom:10px">' +
+        (bout.title
+          ? '<span style="font-size:9px;font-weight:800;color:' + th.gold + ';letter-spacing:0.08em">🏆 ' + escHtml(bout.weight_class.toUpperCase()) + '</span>'
+          : '<span style="font-size:9px;font-weight:700;color:' + th.muted + ';letter-spacing:0.08em;text-transform:uppercase">' + escHtml(bout.weight_class) + '</span>') +
+      '</div>' +
+      '<div style="display:flex;align-items:flex-start;gap:8px">' +
+        fighterCol(a, aWin) +
+        '<div style="flex-shrink:0;text-align:center;min-width:54px;padding-top:14px">' +
+          '<div style="font-size:11px;font-weight:800;color:' + th.muted + '">VS</div>' +
+          (bout.method
+            ? '<div style="margin-top:4px;font-size:8px;color:' + th.muted + ';line-height:1.5">' + escHtml(bout.method) +
+                (bout.round ? '<br>R' + bout.round + ' · ' + escHtml(bout.time) : '') + '</div>'
+            : '') +
+        '</div>' +
+        fighterCol(b, bWin) +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderBoutCardSkeleton(th) {
+    return '<div style="padding:14px ' + S.xl + ';border-bottom:1px solid ' + th.border + ';display:flex;flex-direction:column;align-items:center;gap:10px">' +
+      skeleton(th,'90px','9px',R.sm) +
+      '<div style="display:flex;align-items:center;gap:16px">' +
+        skeleton(th,'56px','56px',R.lg) +
+        skeleton(th,'24px','11px',R.sm) +
+        skeleton(th,'56px','56px',R.lg) +
+      '</div>' +
+    '</div>';
+  }
+
   /* Static UFC 315 fight card data (fallback) */
   var STATIC_CARD = {
     promo: 'UFC', name: 'UFC 315',
@@ -450,12 +553,20 @@
   function sFightCard(th) {
     var raw = cmState.selectedEvent;
     var ev = (typeof raw === 'string') ? tryParse(raw) : (raw || STATIC_CARD);
+    loadEventCard(ev);
+
     var showPrelims = cmState.showPrelims !== false;
     var promo = promoFromEvent(ev);
     var col = promoColor(promo);
-    var mainCard = ev.main_card || ev.mainCard || null;
-    var prelims  = ev.prelims || [];
-    var hasCard  = mainCard && mainCard.length > 0;
+
+    var scrapedBouts = (cmState._eventCardKey === ev.wiki_url) ? cmState.eventCardBouts : null;
+    var cardLoading = !!(ev.wiki_url && cmState._eventCardKey === ev.wiki_url && cmState._eventCardLoading);
+    var hasScrapedCard = scrapedBouts && scrapedBouts.length > 0;
+
+    var legacyMainCard = ev.main_card || ev.mainCard || null;
+    var legacyPrelims  = ev.prelims || [];
+    var hasLegacyCard  = legacyMainCard && legacyMainCard.length > 0;
+
     var mainFight = ev.main_event || ev.mainEvent || '';
     var fighters = parseVs(mainFight);
 
@@ -476,8 +587,44 @@
           : '') +
       '</div>';
 
-    if (hasCard) {
-      /* Full fight card (UFC-style) */
+    if (hasScrapedCard) {
+      /* Real scraped fight card — photos, weight class, VS, result if known */
+      var mainBouts   = scrapedBouts.filter(function (b) { return b.section !== 'prelim'; });
+      var prelimBouts = scrapedBouts.filter(function (b) { return b.section === 'prelim'; });
+
+      return '<div style="height:100%;display:flex;flex-direction:column;background:' + th.bg + ';font-family:' + T.sans + '">' +
+        eventHeader +
+        (prelimBouts.length
+          ? '<div style="display:flex;justify-content:flex-end;padding:0 ' + S.xl + ' 8px;flex-shrink:0">' +
+              '<div onclick="cmToggleState(\'showPrelims\')" style="font-size:10px;font-weight:600;color:' + (showPrelims ? th.primary : th.muted) + ';cursor:pointer">Prelims ' + (showPrelims ? '▲' : '▼') + '</div>' +
+            '</div>'
+          : '') +
+        '<div class="scroll" style="flex:1;padding-bottom:calc(' + NAV_H + 'px + ' + safeBottom + ')">' +
+          '<div style="padding:8px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">MAIN CARD</div>' +
+          mainBouts.map(function (b) { return renderBoutCard(th, b); }).join('') +
+          (showPrelims && prelimBouts.length
+            ? '<div style="padding:16px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">PRELIMS</div>' +
+              prelimBouts.map(function (b) { return renderBoutCard(th, b); }).join('')
+            : '') +
+          '<div style="height:24px"></div>' +
+        '</div>' +
+        c.navBar(th, 1) +
+      '</div>';
+    }
+
+    if (cardLoading) {
+      return '<div style="height:100%;display:flex;flex-direction:column;background:' + th.bg + ';font-family:' + T.sans + '">' +
+        eventHeader +
+        '<div class="scroll" style="flex:1;padding-bottom:calc(' + NAV_H + 'px + ' + safeBottom + ')">' +
+          '<div style="padding:8px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">MAIN CARD</div>' +
+          [1,2,3,4].map(function () { return renderBoutCardSkeleton(th); }).join('') +
+        '</div>' +
+        c.navBar(th, 1) +
+      '</div>';
+    }
+
+    if (hasLegacyCard) {
+      /* Static demo fight card (no wiki_url to scrape from) */
       return '<div style="height:100%;display:flex;flex-direction:column;background:' + th.bg + ';font-family:' + T.sans + '">' +
         eventHeader +
         '<div style="display:flex;justify-content:flex-end;padding:0 ' + S.xl + ' 8px;flex-shrink:0">' +
@@ -485,10 +632,10 @@
         '</div>' +
         '<div class="scroll" style="flex:1;padding-bottom:calc(' + NAV_H + 'px + ' + safeBottom + ')">' +
           '<div style="padding:8px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">MAIN CARD</div>' +
-          mainCard.map(function (f) { return c.fightRow(th, f); }).join('') +
-          (showPrelims && prelims.length
+          legacyMainCard.map(function (f) { return c.fightRow(th, f); }).join('') +
+          (showPrelims && legacyPrelims.length
             ? '<div style="padding:16px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">PRELIMS</div>' +
-              prelims.map(function (f) { return c.fightRow(th, f); }).join('')
+              legacyPrelims.map(function (f) { return c.fightRow(th, f); }).join('')
             : '') +
           '<div style="height:24px"></div>' +
         '</div>' +

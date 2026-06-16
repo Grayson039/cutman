@@ -170,6 +170,14 @@ def scrape_ufc_wikipedia() -> tuple[list[dict], str | None]:
         if not event_name:
             continue
 
+        # Capture the event's own Wikipedia article link (used to fetch its
+        # announced/results fight card later) from the Event column's cell.
+        wiki_url = ""
+        if idx_event is not None and idx_event < len(cells):
+            link = cells[idx_event].find("a", href=True)
+            if link and link["href"].startswith("/wiki/"):
+                wiki_url = "https://en.wikipedia.org" + link["href"]
+
         events.append({
             "promotion":  "UFC",
             "name":       event_name,
@@ -178,6 +186,7 @@ def scrape_ufc_wikipedia() -> tuple[list[dict], str | None]:
             "location":   location,
             "main_event": notes,
             "network":    _detect_network(notes + " " + event_name),
+            "wiki_url":   wiki_url,
         })
 
     return events, None
@@ -290,9 +299,170 @@ def scrape_tapology() -> tuple[list[dict], str | None]:
             "location":   location,
             "main_event": main_event,
             "network":    network,
+            "wiki_url":   "",
         })
 
     return events, None
+
+
+# ─────────────────────────────────────────────────────────────
+# Event detail — full bout list + fighter photos (Wikipedia)
+# ─────────────────────────────────────────────────────────────
+
+import concurrent.futures
+
+_CHAMPION_RE = re.compile(r"\s*\(c\)\s*", re.IGNORECASE)
+
+
+def _fetch_fighter_photo(wiki_path: str) -> str:
+    """Given a /wiki/Fighter_Name path, return the infobox photo URL (or '')."""
+    try:
+        resp = requests.get("https://en.wikipedia.org" + wiki_path, headers=HEADERS, timeout=8)
+        resp.raise_for_status()
+    except Exception:
+        return ""
+    soup = BeautifulSoup(resp.text, "html.parser")
+    infobox = soup.find("table", class_="infobox")
+    if not infobox:
+        return ""
+    img = infobox.find("img")
+    if not img or not img.get("src"):
+        return ""
+    src = img["src"]
+    return "https:" + src if src.startswith("//") else src
+
+
+def _make_fighter(raw_name: str, link_map: dict) -> dict:
+    is_champ = bool(_CHAMPION_RE.search(raw_name))
+    name = _CHAMPION_RE.sub("", raw_name).strip()
+    href = link_map.get(name.lower(), "")
+    return {"name": name, "champion": is_champ, "wiki_path": href, "photo": ""}
+
+
+def _parse_announced_bouts(ul) -> list[dict]:
+    """Upcoming event: <ul><li>Weight class bout: A vs. B</li>...</ul>"""
+    bouts = []
+    bout_re = re.compile(r"^(.*?)\s*bout:\s*(.+)$", re.IGNORECASE)
+    for li in ul.find_all("li"):
+        text = li.get_text(" ", strip=True)
+        text = re.sub(r"\s*\[\s*\d+\s*\]\s*$", "", text)  # strip trailing [6] citation
+        m = bout_re.match(text)
+        if not m:
+            continue
+        weight_class, matchup = m.group(1).strip(), m.group(2).strip()
+        sides = re.split(r"\s+vs\.?\s+", matchup, maxsplit=1)
+        if len(sides) != 2:
+            continue
+        link_map = {a.get_text(strip=True).lower(): a["href"]
+                    for a in li.find_all("a") if a.get("href", "").startswith("/wiki/")}
+        bouts.append({
+            "section": "main",
+            "weight_class": weight_class,
+            "title": "(c)" in matchup.lower(),
+            "method": "", "round": None, "time": "",
+            "fighter_a": _make_fighter(sides[0], link_map),
+            "fighter_b": _make_fighter(sides[1], link_map),
+        })
+    return bouts
+
+
+def _parse_results_table(table) -> list[dict]:
+    """Completed event: rows of [weight, fighterA, 'def.', fighterB, method, round, time, notes]."""
+    bouts = []
+    section = "main"
+    for row in table.find_all("tr"):
+        cells = row.find_all(["td", "th"])
+        if len(cells) == 1:
+            label = cells[0].get_text(" ", strip=True).lower()
+            if "prelim" in label:
+                section = "prelim"
+            elif "main" in label:
+                section = "main"
+            continue
+        if len(cells) < 7:
+            continue
+        texts = [c.get_text(" ", strip=True) for c in cells]
+        weight_class, a_raw, vs_word, b_raw, method, round_, time_ = texts[:7]
+        if not weight_class or weight_class.lower() == "weight class":
+            continue
+        link_map = {a.get_text(strip=True).lower(): a["href"]
+                    for a in row.find_all("a") if a.get("href", "").startswith("/wiki/")}
+        fighter_a = _make_fighter(a_raw, link_map)
+        fighter_b = _make_fighter(b_raw, link_map)
+        fighter_a["winner"] = True
+        fighter_b["winner"] = False
+        bouts.append({
+            "section": section,
+            "weight_class": weight_class,
+            "title": "(c)" in (a_raw + b_raw).lower(),
+            "method": method,
+            "round": int(round_) if round_.isdigit() else None,
+            "time": time_,
+            "fighter_a": fighter_a,
+            "fighter_b": fighter_b,
+        })
+    return bouts
+
+
+def get_event_card(wiki_url: str) -> tuple[list[dict], str | None]:
+    """
+    Fetch an event's own Wikipedia page and return its bout list.
+    Upcoming events use the 'Announced bouts' bullet list (no result yet);
+    completed events use the 'Results' table (includes method/round/time).
+    Each fighter gets a best-effort Wikipedia infobox photo.
+    """
+    if not wiki_url.startswith("https://en.wikipedia.org/wiki/"):
+        return [], "Invalid wiki_url"
+
+    try:
+        resp = requests.get(wiki_url, headers=HEADERS, timeout=12)
+        resp.raise_for_status()
+    except Exception as e:
+        return [], f"Event page fetch failed: {e}"
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    bouts: list[dict] = []
+
+    results_heading = soup.find(id="Results")
+    if results_heading:
+        table = results_heading.find_next("table", class_="toccolours")
+        if table:
+            bouts = _parse_results_table(table)
+
+    if not bouts:
+        for heading in soup.find_all(["h2", "h3"]):
+            hid = (heading.get("id", "") + heading.get_text()).lower()
+            if "announced" in hid or "fight card" in hid:
+                container = heading.find_parent("div", class_="mw-heading") or heading
+                ul = container.find_next_sibling("ul")
+                if ul:
+                    bouts = _parse_announced_bouts(ul)
+                break
+
+    if not bouts:
+        return [], "No fight card found on event page"
+
+    # Resolve fighter photos concurrently (best-effort, missing photo = initials fallback on frontend)
+    fighters = []
+    for b in bouts:
+        for key in ("fighter_a", "fighter_b"):
+            if b[key]["wiki_path"]:
+                fighters.append(b[key])
+
+    def resolve(f):
+        f["photo"] = _fetch_fighter_photo(f["wiki_path"])
+        return f
+
+    if fighters:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+            list(pool.map(resolve, fighters))
+
+    for b in bouts:
+        for key in ("fighter_a", "fighter_b"):
+            b[key].pop("wiki_path", None)
+
+    return bouts, None
 
 
 # ─────────────────────────────────────────────────────────────

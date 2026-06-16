@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from scrapers.fight_cards import get_upcoming_events
+from scrapers.fight_cards import get_upcoming_events, get_event_card
 from scrapers.fighters import search_fighters, get_fighter_profile
 from parsers.news_feed import fetch_news
 from datetime import datetime
@@ -26,6 +26,20 @@ def events():
     data, errors = get_upcoming_events()
     return app.response_class(
         response=__import__('json').dumps(data, default=serialize),
+        mimetype='application/json'
+    )
+
+
+@app.route("/api/events/card")
+def event_card():
+    wiki_url = request.args.get("wiki_url", "").strip()
+    if not wiki_url:
+        return jsonify({"error": "wiki_url param required"}), 400
+    bouts, error = get_event_card(wiki_url)
+    if error and not bouts:
+        return jsonify({"error": error}), 404
+    return app.response_class(
+        response=__import__('json').dumps({"bouts": bouts}, default=serialize),
         mimetype='application/json'
     )
 
