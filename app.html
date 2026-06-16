@@ -22,6 +22,8 @@
   .hscroll::-webkit-scrollbar { display: none; }
   input, button { font-family: inherit; }
   input:focus { outline: none; }
+  @keyframes cmSkeletonPulse { 0%, 100% { background-color: #1A1A1A; } 50% { background-color: #2A2A2A; } }
+  .cm-skel { animation: cmSkeletonPulse 1.3s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -150,8 +152,8 @@
   }
 
   function skeleton(th, w, h, radius) {
-    return '<div style="width:' + (w||'100%') + ';height:' + (h||'16px') + ';' +
-      'background:' + th.card2 + ';border-radius:' + (radius||R.sm) + ';flex-shrink:0"></div>';
+    return '<div class="cm-skel" style="width:' + (w||'100%') + ';height:' + (h||'16px') + ';' +
+      'border-radius:' + (radius||R.sm) + ';flex-shrink:0"></div>';
   }
 
   function spinner(th) {
@@ -218,14 +220,24 @@
   }
 
   function renderEventHeroSkeleton(th) {
-    return '<div style="margin:0 ' + S.xl + ' ' + S.section + ';border-radius:' + R.xl + ';' +
-      'background:' + th.card + ';height:190px;overflow:hidden;padding:18px;' +
-      'display:flex;flex-direction:column;justify-content:space-between">' +
-      '<div style="display:flex;gap:8px">' + skeleton(th,'60px','18px',R.sm) + '</div>' +
-      '<div style="display:flex;flex-direction:column;gap:8px">' +
-        skeleton(th,'80px','10px',R.sm) +
-        skeleton(th,'70%','28px',R.md) +
-        skeleton(th,'50%','10px',R.sm) +
+    return '<div style="margin:0 ' + S.xl + ' ' + S.section + '">' +
+      skeleton(th,'100%','190px',R.xl) +
+    '</div>';
+  }
+
+  function renderEventCardSkeleton(th) {
+    return '<div style="flex-shrink:0;width:160px">' +
+      skeleton(th,'160px','118px',R.lg) +
+      '<div style="margin-top:8px">' + skeleton(th,'80%','13px',R.sm) + '</div>' +
+    '</div>';
+  }
+
+  function renderNewsItemSkeleton(th) {
+    return '<div style="display:flex;gap:10px;padding:11px 0;border-bottom:1px solid ' + th.border + '">' +
+      skeleton(th,'70px','36px',R.sm) +
+      '<div style="flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center">' +
+        skeleton(th,'100%','12px',R.sm) +
+        skeleton(th,'70%','12px',R.sm) +
       '</div>' +
     '</div>';
   }
@@ -316,7 +328,7 @@
             '</div>'
           : loading
             ? '<div style="display:flex;gap:10px;padding:0 ' + S.xl + ';margin-bottom:' + S.section + ';overflow:hidden">' +
-                [1,2,3].map(function() { return '<div style="flex-shrink:0;width:160px;height:118px;background:' + th.card + ';border-radius:' + R.lg + '"></div>'; }).join('') +
+                [1,2,3].map(function() { return renderEventCardSkeleton(th); }).join('') +
               '</div>'
             : '<div style="padding:0 ' + S.xl + ' ' + S.section + ';color:' + th.muted + ';font-size:12px">No events found</div>') +
 
@@ -327,16 +339,8 @@
               news.slice(0, 5).map(function (item, i) { return renderNewsItem(th, item, i); }).join('') +
             '</div>'
           : loading
-            ? '<div style="padding:0 ' + S.xl + ';display:flex;flex-direction:column;gap:14px">' +
-                [1,2,3].map(function() {
-                  return '<div style="display:flex;gap:10px">' +
-                    skeleton(th,'70px','36px',R.sm) +
-                    '<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
-                      skeleton(th,'100%','12px',R.sm) +
-                      skeleton(th,'80%','12px',R.sm) +
-                    '</div>' +
-                  '</div>';
-                }).join('') +
+            ? '<div style="padding:0 ' + S.xl + '">' +
+                [1,2,3,4,5].map(function() { return renderNewsItemSkeleton(th); }).join('') +
               '</div>'
             : '<div style="padding:0 ' + S.xl + ';color:' + th.muted + ';font-size:12px">No news available</div>') +
 
