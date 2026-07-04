@@ -48,8 +48,9 @@
   function loadEvents() {
     if (cmState._eventsLoaded || cmState._eventsLoading) return;
     cmState._eventsLoading = true;
+    cmState._eventsError = false;
     fetch(API + '/api/events')
-      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (data) {
         cmState.eventsData = Array.isArray(data) ? data : [];
         cmState._eventsLoaded = true;
@@ -60,6 +61,7 @@
         cmState.eventsData = [];
         cmState._eventsLoaded = true;
         cmState._eventsLoading = false;
+        cmState._eventsError = true;
         if (cmState.cur === 'home' || cmState.cur === 'cards') cmRender();
       });
   }
@@ -67,8 +69,9 @@
   function loadNews() {
     if (cmState._newsLoaded || cmState._newsLoading) return;
     cmState._newsLoading = true;
+    cmState._newsError = false;
     fetch(API + '/api/news')
-      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (data) {
         cmState.newsData = Array.isArray(data) ? data : [];
         cmState._newsLoaded = true;
@@ -79,6 +82,7 @@
         cmState.newsData = [];
         cmState._newsLoaded = true;
         cmState._newsLoading = false;
+        cmState._newsError = true;
         if (cmState.cur === 'home' || cmState.cur === 'news') cmRender();
       });
   }
@@ -97,7 +101,7 @@
     cmState._eventCardLoaded = false;
     cmState._eventCardLoading = true;
     fetch(API + '/api/events/card?wiki_url=' + encodeURIComponent(key))
-      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (data) {
         if (cmState._eventCardKey !== key) return;
         cmState.eventCardBouts = Array.isArray(data.bouts) ? data.bouts : [];
@@ -121,14 +125,16 @@
     if (!val.trim()) {
       cmState.searchResults = null;
       cmState.searchLoading = false;
+      cmState.searchError = false;
       cmRender();
       return;
     }
     _searchTimer = setTimeout(function () {
       cmState.searchLoading = true;
+      cmState.searchError = false;
       cmRender();
       fetch(API + '/api/fighters/search?q=' + encodeURIComponent(val.trim()))
-        .then(function (r) { return r.json(); })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function (data) {
           cmState.searchResults = Array.isArray(data) ? data : [];
           cmState.searchLoading = false;
@@ -137,6 +143,7 @@
         .catch(function () {
           cmState.searchResults = [];
           cmState.searchLoading = false;
+          cmState.searchError = true;
           cmRender();
         });
     }, 380);
@@ -149,7 +156,7 @@
     cmState.fighterTab = 'record';
     cmGo('fighter');
     fetch(API + '/api/fighters/' + encodeURIComponent(slug))
-      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (data) {
         if (cmState.fighterSlug === slug) {
           cmState.fighterProfile = data;
@@ -192,6 +199,26 @@
       '<div style="width:28px;height:28px;border-radius:50%;' +
         'border:2.5px solid ' + th.border + ';border-top-color:' + th.primary + ';' +
         'animation:spin 0.7s linear infinite"></div>' +
+    '</div>';
+  }
+
+  function renderErrorState(th, title, retryOnclick) {
+    return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 32px;text-align:center">' +
+      '<div style="font-size:48px;margin-bottom:16px">⚠️</div>' +
+      '<div style="font-size:15px;font-weight:700;color:' + th.text + ';margin-bottom:6px">' + title + '</div>' +
+      '<div style="font-size:13px;color:' + th.muted + ';margin-bottom:20px">Check your connection and try again</div>' +
+      '<div onclick="' + retryOnclick + '" style="background:' + th.primary + ';color:#FFF;font-size:13px;font-weight:700;padding:10px 22px;border-radius:' + R.pill + ';cursor:pointer">Retry</div>' +
+    '</div>';
+  }
+
+  function renderEventHeroError(th) {
+    return '<div style="margin:0 ' + S.xl + ' ' + S.section + ';border-radius:' + R.xl + ';' +
+      'background:' + th.card + ';border:1px solid ' + th.border + ';height:190px;display:flex;flex-direction:column;align-items:center;' +
+      'justify-content:center;text-align:center;gap:10px;padding:0 28px">' +
+      '<div style="font-size:28px">⚠️</div>' +
+      '<div style="font-size:13px;font-weight:700;color:' + th.muted + '">Couldn\'t load events</div>' +
+      '<div onclick="cmState._eventsLoaded=false;cmState._eventsError=false;cmRender()" ' +
+        'style="font-size:12px;font-weight:700;color:' + th.primary + ';cursor:pointer;padding:6px 16px;border:1px solid ' + th.primary + '44;border-radius:' + R.pill + '">Retry</div>' +
     '</div>';
   }
 
@@ -361,7 +388,9 @@
           ? renderEventHero(th, nextEv)
           : loading
             ? renderEventHeroSkeleton(th)
-            : renderEventHeroEmpty(th, filter)) +
+            : cmState._eventsError
+              ? renderEventHeroError(th)
+              : renderEventHeroEmpty(th, filter)) +
 
         /* Filter chips */
         '<div class="hscroll" style="display:flex;gap:7px;padding:0 ' + S.xl + ';margin-bottom:' + S.section + '">' +
@@ -390,7 +419,10 @@
             ? '<div style="padding:0 ' + S.xl + '">' +
                 [1,2,3,4,5].map(function() { return renderNewsItemSkeleton(th); }).join('') +
               '</div>'
-            : '<div style="padding:0 ' + S.xl + ';color:' + th.muted + ';font-size:12px">No news available</div>') +
+            : cmState._newsError
+              ? '<div style="padding:0 ' + S.xl + ' ' + S.section + ';color:' + th.muted + ';font-size:12px">Couldn\'t load news — ' +
+                  '<span onclick="cmState._newsLoaded=false;cmState._newsError=false;cmRender()" style="color:' + th.primary + ';font-weight:700;cursor:pointer">Retry</span></div>'
+              : '<div style="padding:0 ' + S.xl + ';color:' + th.muted + ';font-size:12px">No news available</div>') +
 
         '<div style="height:24px"></div>' +
       '</div>' +
@@ -430,7 +462,9 @@
                   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + th.muted + '" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>' +
                 '</div>';
               }).join('')
-            : '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center">' +
+            : cmState._eventsError
+              ? renderErrorState(th, "Couldn't load fight cards", "cmState._eventsLoaded=false;cmState._eventsError=false;cmRender()")
+              : '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center">' +
                 '<div style="font-size:48px;margin-bottom:16px">📅</div>' +
                 '<div style="font-size:16px;font-weight:700;color:' + th.text + ';margin-bottom:8px">No Events Found</div>' +
                 '<div style="font-size:13px;color:' + th.muted + '">Check back soon for upcoming fights</div>' +
@@ -513,24 +547,6 @@
     '</div>';
   }
 
-  /* Static UFC 315 fight card data (fallback) */
-  var STATIC_CARD = {
-    promo: 'UFC', name: 'UFC 315',
-    date: 'Saturday, May 31, 2026', time: 'Main Card 10pm ET · Prelims 8pm ET',
-    venue: 'Madison Square Garden', city: 'New York, NY',
-    network: 'ESPN+', ppvPrice: '$79.99',
-    main_card: [
-      { a:'Jon Jones', aRank:'Champion', aOdds:-350, b:'Stipe Miocic', bRank:'#1 Contender', bOdds:+280, weightClass:'Heavyweight', rounds:5, title:true, main:true },
-      { a:'Leon Edwards', aRank:'Champion', aOdds:-280, b:'Shavkat Rakhimov', bRank:'#3', bOdds:+225, weightClass:'Welterweight', rounds:5, title:true },
-      { a:'Alex Pereira', aRank:'#1', aOdds:-400, b:'Khalil Rountree Jr.', bRank:'#4', bOdds:+310, weightClass:'Light Heavyweight', rounds:3 },
-      { a:'Sean Strickland', aRank:'#2', aOdds:-150, b:'Paulo Costa', bRank:'#5', bOdds:+125, weightClass:'Middleweight', rounds:3 }
-    ],
-    prelims: [
-      { a:'Brian Ortega', aRank:'#3', aOdds:+135, b:'Yair Rodriguez', bRank:'#2', bOdds:-165, weightClass:'Featherweight', rounds:3 },
-      { a:'Mateusz Gamrot', aRank:'#6', aOdds:+165, b:'Arman Tsarukyan', bRank:'#4', bOdds:-200, weightClass:'Lightweight', rounds:3 }
-    ]
-  };
-
   /* Helper: parse "Fighter A vs. Fighter B" → ['Fighter A', 'Fighter B'] */
   function parseVs(str) {
     if (!str) return [];
@@ -552,7 +568,21 @@
 
   function sFightCard(th) {
     var raw = cmState.selectedEvent;
-    var ev = (typeof raw === 'string') ? tryParse(raw) : (raw || STATIC_CARD);
+    var ev = (typeof raw === 'string') ? tryParse(raw) : raw;
+
+    if (!ev) {
+      return '<div style="height:100%;display:flex;flex-direction:column;background:' + th.bg + ';font-family:' + T.sans + '">' +
+        '<div style="padding-top:' + safeTop + ';padding-left:' + S.xl + ';padding-bottom:10px;flex-shrink:0">' + c.backBtn(th, '') + '</div>' +
+        '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">' +
+          '<div style="font-size:48px;margin-bottom:16px">📅</div>' +
+          '<div style="font-size:15px;font-weight:700;color:' + th.text + ';margin-bottom:6px">No Event Selected</div>' +
+          '<div style="font-size:13px;color:' + th.muted + ';margin-bottom:24px">Pick an event from Fight Cards to see the full card</div>' +
+          '<div onclick="cmGo(\'cards\')" style="background:' + th.primary + ';color:#FFF;font-size:13px;font-weight:700;padding:12px 24px;border-radius:' + R.pill + ';cursor:pointer">Browse Fight Cards</div>' +
+        '</div>' +
+        c.navBar(th, 1) +
+      '</div>';
+    }
+
     loadEventCard(ev);
 
     var showPrelims = cmState.showPrelims !== false;
@@ -562,10 +592,6 @@
     var scrapedBouts = (cmState._eventCardKey === ev.wiki_url) ? cmState.eventCardBouts : null;
     var cardLoading = !!(ev.wiki_url && cmState._eventCardKey === ev.wiki_url && cmState._eventCardLoading);
     var hasScrapedCard = scrapedBouts && scrapedBouts.length > 0;
-
-    var legacyMainCard = ev.main_card || ev.mainCard || null;
-    var legacyPrelims  = ev.prelims || [];
-    var hasLegacyCard  = legacyMainCard && legacyMainCard.length > 0;
 
     var mainFight = ev.main_event || ev.mainEvent || '';
     var fighters = parseVs(mainFight);
@@ -618,26 +644,6 @@
         '<div class="scroll" style="flex:1;padding-bottom:calc(' + NAV_H + 'px + ' + safeBottom + ')">' +
           '<div style="padding:8px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">MAIN CARD</div>' +
           [1,2,3,4].map(function () { return renderBoutCardSkeleton(th); }).join('') +
-        '</div>' +
-        c.navBar(th, 1) +
-      '</div>';
-    }
-
-    if (hasLegacyCard) {
-      /* Static demo fight card (no wiki_url to scrape from) */
-      return '<div style="height:100%;display:flex;flex-direction:column;background:' + th.bg + ';font-family:' + T.sans + '">' +
-        eventHeader +
-        '<div style="display:flex;justify-content:flex-end;padding:0 ' + S.xl + ' 8px;flex-shrink:0">' +
-          '<div onclick="cmToggleState(\'showPrelims\')" style="font-size:10px;font-weight:600;color:' + (showPrelims ? th.primary : th.muted) + ';cursor:pointer">Prelims ' + (showPrelims ? '▲' : '▼') + '</div>' +
-        '</div>' +
-        '<div class="scroll" style="flex:1;padding-bottom:calc(' + NAV_H + 'px + ' + safeBottom + ')">' +
-          '<div style="padding:8px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">MAIN CARD</div>' +
-          legacyMainCard.map(function (f) { return c.fightRow(th, f); }).join('') +
-          (showPrelims && legacyPrelims.length
-            ? '<div style="padding:16px 0 4px ' + S.xl + ';font-size:9px;font-weight:800;color:' + th.muted + ';letter-spacing:0.14em">PRELIMS</div>' +
-              legacyPrelims.map(function (f) { return c.fightRow(th, f); }).join('')
-            : '') +
-          '<div style="height:24px"></div>' +
         '</div>' +
         c.navBar(th, 1) +
       '</div>';
@@ -727,11 +733,13 @@
                 '<div style="font-size:13px;color:' + th.muted + ';line-height:1.6">Type a name to search<br>Sherdog\'s fighter database</div>' +
               '</div>'
             : results.length === 0
-              ? '<div style="display:flex;flex-direction:column;align-items:center;padding:64px 32px;text-align:center">' +
-                  '<div style="font-size:48px;margin-bottom:16px">🔍</div>' +
-                  '<div style="font-size:15px;font-weight:700;color:' + th.text + ';margin-bottom:6px">No results</div>' +
-                  '<div style="font-size:13px;color:' + th.muted + '">Try a different name</div>' +
-                '</div>'
+              ? (cmState.searchError
+                  ? renderErrorState(th, "Couldn't search fighters", "cmSearch('" + escAttr(q) + "')")
+                  : '<div style="display:flex;flex-direction:column;align-items:center;padding:64px 32px;text-align:center">' +
+                      '<div style="font-size:48px;margin-bottom:16px">🔍</div>' +
+                      '<div style="font-size:15px;font-weight:700;color:' + th.text + ';margin-bottom:6px">No results</div>' +
+                      '<div style="font-size:13px;color:' + th.muted + '">Try a different name</div>' +
+                    '</div>')
               : results.map(function (f) {
                   return '<div onclick="cmLoadFighter(\'' + escAttr(f.slug) + '\')" ' +
                     'style="padding:12px ' + S.xl + ';border-bottom:1px solid ' + th.border + ';cursor:pointer;display:flex;align-items:center;gap:12px">' +
@@ -774,7 +782,9 @@
         '<div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:32px;text-align:center">' +
           '<div style="font-size:48px;margin-bottom:16px">⚠️</div>' +
           '<div style="font-size:15px;font-weight:700;color:' + th.text + ';margin-bottom:6px">Could not load fighter</div>' +
-          '<div style="font-size:13px;color:' + th.muted + '">Try searching again</div>' +
+          '<div style="font-size:13px;color:' + th.muted + ';margin-bottom:20px">Check your connection and try again</div>' +
+          '<div onclick="cmLoadFighter(\'' + escAttr(cmState.fighterSlug || '') + '\')" ' +
+            'style="background:' + th.primary + ';color:#FFF;font-size:13px;font-weight:700;padding:10px 22px;border-radius:' + R.pill + ';cursor:pointer">Retry</div>' +
         '</div>' +
         c.navBar(th, 2) +
       '</div>';
@@ -894,7 +904,9 @@
           ? spinner(th)
           : news && news.length
             ? news.map(function (item, i) { return renderNewsItem(th, item, i); }).join('')
-            : '<div style="display:flex;flex-direction:column;align-items:center;padding:64px 0;text-align:center">' +
+            : cmState._newsError
+              ? renderErrorState(th, "Couldn't load news", "cmState._newsLoaded=false;cmState._newsError=false;cmRender()")
+              : '<div style="display:flex;flex-direction:column;align-items:center;padding:64px 0;text-align:center">' +
                 '<div style="font-size:48px;margin-bottom:16px">📰</div>' +
                 '<div style="font-size:15px;font-weight:700;color:' + th.text + ';margin-bottom:6px">No News Available</div>' +
                 '<div style="font-size:13px;color:' + th.muted + '">Check back later</div>' +
@@ -913,10 +925,10 @@
 
       '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">' +
         '<div style="width:72px;height:72px;border-radius:50%;background:' + th.card + ';border:1.5px solid ' + th.border + ';display:flex;align-items:center;justify-content:center;margin-bottom:20px">' +
-          '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="' + th.muted + '" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>' +
+          '<span style="font-size:28px">🥊</span>' +
         '</div>' +
-        '<div style="font-size:18px;font-weight:800;color:' + th.text + ';margin-bottom:8px">Sign In</div>' +
-        '<div style="font-size:13px;color:' + th.muted + ';line-height:1.6;margin-bottom:32px">Favorite fighters, set alerts,<br>personalize your feed.</div>' +
+        '<div style="font-size:18px;font-weight:800;color:' + th.text + ';margin-bottom:8px">Cutman</div>' +
+        '<div style="font-size:13px;color:' + th.muted + ';line-height:1.6;margin-bottom:32px">One app. Every promotion.<br>All the fights.</div>' +
 
         /* Theme toggle */
         '<div style="width:100%;max-width:280px;background:' + th.card + ';border-radius:' + R.lg + ';padding:16px;margin-bottom:12px;border:1px solid ' + th.border + '">' +
@@ -929,7 +941,7 @@
         '</div>' +
 
         /* Refresh data */
-        '<div onclick="cmState._eventsLoaded=false;cmState._eventsLoading=false;cmState._newsLoaded=false;cmState._newsLoading=false;cmGo(\'home\')" ' +
+        '<div onclick="cmState._eventsLoaded=false;cmState._eventsLoading=false;cmState._eventsError=false;cmState._newsLoaded=false;cmState._newsLoading=false;cmState._newsError=false;cmGo(\'home\')" ' +
           'style="width:100%;max-width:280px;background:' + th.card + ';border-radius:' + R.lg + ';padding:16px;border:1px solid ' + th.border + ';cursor:pointer">' +
           '<div style="display:flex;justify-content:space-between;align-items:center">' +
             '<span style="font-size:13px;font-weight:600;color:' + th.sub + '">Refresh All Data</span>' +
